@@ -1,0 +1,20 @@
+{
+  "name": "projmanagement",
+  "version": "1.0.0",
+  "description": "a project management application to strengthen backend",
+  "keywords": [
+    "backend",
+    "api",
+    "creation"
+  ],
+  "license": "ISC",
+  "author": "ayusman pati",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "3.8.1"
+  }
+}
