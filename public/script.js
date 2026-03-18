@@ -1,5 +1,4 @@
 // ── DATA ──
-const API_BASE = "/api/v1";
 let CU = null,
   CPJ = null,
   CTK = null,
@@ -478,6 +477,7 @@ function doLogin() {
     });
     // Remove auth screen only after curtain has fully covered viewport (500ms sweep)
     setTimeout(() => {
+      AuthBg.stop();
       document.getElementById("authScr").classList.remove("show");
     }, 520);
   }, 440);
@@ -495,6 +495,7 @@ function doReg() {
       easing: "easeInCubic",
     });
     setTimeout(() => {
+      AuthBg.stop();
       document.getElementById("authScr").classList.remove("show");
     }, 520);
   }, 700);
@@ -632,7 +633,10 @@ function doLogout() {
   document.getElementById("authScr").classList.add("show");
   const box = document.getElementById("authBox");
   anime.set(box, { opacity: 0, translateY: 20, scale: 0.97 });
+  // Re-init background so it picks up the current theme immediately
+  AuthBg.stop();
   requestAnimationFrame(() => {
+    AuthBg.init();
     anime({
       targets: box,
       opacity: [0, 1],
@@ -675,8 +679,15 @@ function initApp() {
   // Start rendering dashboard content behind the curtain
   go("dashboard");
 
+  // Keep progress bar invisible until curtain has fully opened
+  const pb = document.getElementById("pbar");
+  if (pb) { pb.style.opacity = "0"; pb.style.width = "0"; }
+
   // Curtain opens ~1900ms in — reveal sidebar + topbar then
   setTimeout(() => {
+    // Restore progress bar now that curtain has fully opened
+    if (pb) pb.style.opacity = "";
+
     anime({
       targets: sb,
       opacity: [0, 1],
@@ -834,19 +845,17 @@ function rDash() {
     .join("");
   if (window.lucide) lucide.createIcons();
 
-  // Animate after a single rAF — DOM is fully painted
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      countUp("stP", S.projects.length, 600);
-      countUp("stD", done, 700);
-      countUp("stI", inp, 700);
-      countUp("stM", S.members.length, 600);
-      reveal(".stat-strip .sc", 45, 6);
-      reveal("#dashPG .pc", 55, 8);
-      reveal("#actB tr", 30, 5);
-      animPBars();
-    });
-  });
+  // Two rAFs: first lets the DOM paint, second ensures layout is stable
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    countUp("stP", S.projects.length, 600);
+    countUp("stD", done, 700);
+    countUp("stI", inp, 700);
+    countUp("stM", S.members.length, 600);
+    reveal(".stat-strip .sc", 45, 6);
+    reveal("#dashPG .pc", 55, 8);
+    reveal("#actB tr", 30, 5);
+    animPBars();
+  }));
 }
 
 // ── PROJECTS ──
@@ -1064,9 +1073,6 @@ function rMyTasks(f) {
     requestAnimationFrame(() => reveal("#myTB tr", 30, 4)),
   );
 }
-function filterTasks(v) {
-  rMyTasks(v);
-}
 
 // ── TASK CRUD ──
 function openCreateTask() {
@@ -1171,6 +1177,7 @@ function updTSt() {
   }
 }
 function delCurTask() {
+  if (!confirm("Delete this task? This cannot be undone.")) return;
   const m = document.querySelector("#mTaskD .md");
   anime({
     targets: m,
@@ -1347,7 +1354,10 @@ function openCreateNote() {
   om("mNote");
 }
 function openEditNote(id) {
-  if (CU?.role !== "admin") return;
+  if (CU?.role !== "admin") {
+    toast("Only admins can edit notes.", "err");
+    return;
+  }
   const n = S.notes.find((x) => x._id === id);
   if (!n) return;
   ENO = id;
@@ -1530,7 +1540,10 @@ function rProfile() {
 
 // ── SEARCH ──
 function doSearch(q) {
-  if (!q) return;
+  if (!q) {
+    go("projects");
+    return;
+  }
   q = q.toLowerCase();
   const p = S.projects.find(
     (x) =>
@@ -1538,6 +1551,7 @@ function doSearch(q) {
       x.description.toLowerCase().includes(q),
   );
   if (p) openProject(p._id);
+  else toast("No projects match your search.", "inf");
 }
 
 // ── MODALS ──
@@ -1558,7 +1572,9 @@ function om(id) {
       easing: "easeOutCubic",
     });
   });
-  document.addEventListener("keydown", escH);
+  if (document.querySelectorAll(".mo.open").length === 1) {
+    document.addEventListener("keydown", escH);
+  }
 }
 function cm(id) {
   const el = document.getElementById(id);
@@ -1576,7 +1592,9 @@ function cm(id) {
       md.style.transform = "";
     },
   });
-  document.removeEventListener("keydown", escH);
+  if (!document.querySelectorAll(".mo.open").length) {
+    document.removeEventListener("keydown", escH);
+  }
 }
 function escH(e) {
   if (e.key === "Escape")
@@ -1624,6 +1642,190 @@ function fmtD(d) {
   });
 }
 // ── THEME ──
+// ── AUTH BACKGROUND — Dot Grid + Radial Spotlight ────────────────────────────
+const AuthBg = (() => {
+  let canvas, ctx, raf, W, H;
+  let mouse = { x: -9999, y: -9999 };
+  let target = { x: -9999, y: -9999 }; // lerp target
+  let spotlights = [];   // animated soft glows
+  let time = 0;
+
+  const DOT_GAP   = 28;   // grid spacing
+  const DOT_R     = 1.5;  // base dot radius
+  const SPOT_CNT  = 3;    // background floating spotlights
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  function isDark() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+  }
+
+  function theme() {
+    return isDark() ? {
+      bg:          '#0f0f10',
+      dot:         'rgba(255,255,255,0.13)',
+      dotLit:      'rgba(107,132,240,0.95)',
+      spotA:       'rgba(59,91,219,0.22)',
+      spotB:       'rgba(107,132,240,0.14)',
+      spotC:       'rgba(139,92,246,0.12)',
+      cursorSpot:  'rgba(107,132,240,0.28)',
+      cursorOuter: 'rgba(59,91,219,0.08)',
+    } : {
+      bg:          '#f7f7f5',
+      dot:         'rgba(24,24,27,0.12)',
+      dotLit:      'rgba(59,91,219,0.85)',
+      spotA:       'rgba(59,91,219,0.10)',
+      spotB:       'rgba(107,132,240,0.07)',
+      spotC:       'rgba(139,92,246,0.06)',
+      cursorSpot:  'rgba(59,91,219,0.13)',
+      cursorOuter: 'rgba(107,132,240,0.05)',
+    };
+  }
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    initSpotlights();
+  }
+
+  function initSpotlights() {
+    spotlights = Array.from({ length: SPOT_CNT }, (_, i) => ({
+      x:  Math.random() * W,
+      y:  Math.random() * H,
+      r:  Math.random() * 240 + 200,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      phase: (i / SPOT_CNT) * Math.PI * 2,
+    }));
+  }
+
+  // ── draw loop ─────────────────────────────────────────────────────────────
+  function draw() {
+    raf = requestAnimationFrame(draw);
+    time += 0.008;
+
+    // Smooth-lerp mouse toward target (0.08 = gentle ease, snappy enough to feel responsive)
+    mouse.x += (target.x - mouse.x) * 0.08;
+    mouse.y += (target.y - mouse.y) * 0.08;
+
+    const T = theme();
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. solid background
+    ctx.fillStyle = T.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. floating soft blobs
+    const blobColors = [T.spotA, T.spotB, T.spotC];
+    spotlights.forEach((s, i) => {
+      s.x += s.vx;
+      s.y += s.vy;
+      if (s.x < -s.r)  s.x = W + s.r;
+      if (s.x > W + s.r) s.x = -s.r;
+      if (s.y < -s.r)  s.y = H + s.r;
+      if (s.y > H + s.r) s.y = -s.r;
+
+      const pulse = 1 + 0.12 * Math.sin(time * 0.9 + s.phase);
+      const pr = s.r * pulse;
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, pr);
+      g.addColorStop(0, blobColors[i % blobColors.length]);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, pr, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 3. cursor radial glow
+    const cx = mouse.x, cy = mouse.y;
+    const cg1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 180);
+    cg1.addColorStop(0, T.cursorSpot);
+    cg1.addColorStop(1, 'transparent');
+    ctx.fillStyle = cg1;
+    ctx.fillRect(0, 0, W, H);
+
+    const cg2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 380);
+    cg2.addColorStop(0, T.cursorOuter);
+    cg2.addColorStop(1, 'transparent');
+    ctx.fillStyle = cg2;
+    ctx.fillRect(0, 0, W, H);
+
+    // 4. dot grid — lit by cursor proximity
+    const cols = Math.ceil(W / DOT_GAP) + 2;
+    const rows = Math.ceil(H / DOT_GAP) + 2;
+    const offX = ((W % DOT_GAP) / 2);
+    const offY = ((H % DOT_GAP) / 2);
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const dx = offX + c * DOT_GAP;
+        const dy = offY + r * DOT_GAP;
+        const dist = Math.hypot(dx - cx, dy - cy);
+
+        // proximity factor: 1 at cursor, 0 at 220px away
+        const prox = Math.max(0, 1 - dist / 220);
+        // soft pulse on nearest dot
+        const scale = 1 + prox * 2.2;
+
+        // interpolate color: base dot → accent lit
+        if (prox > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.13 + prox * 0.87;
+          ctx.fillStyle = T.dotLit;
+          ctx.beginPath();
+          ctx.arc(dx, dy, DOT_R * scale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = T.dot;
+          ctx.beginPath();
+          ctx.arc(dx, dy, DOT_R, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  // ── public ────────────────────────────────────────────────────────────────
+  let _listenersAttached = false;
+
+  function init() {
+    canvas = document.getElementById('authBgCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resize();
+
+    if (!_listenersAttached) {
+      const scr = document.getElementById('authScr');
+      scr.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        target.x = e.clientX - rect.left;
+        target.y = e.clientY - rect.top;
+      });
+      scr.addEventListener('mouseleave', () => {
+        // Ease back to center — no snap
+        target.x = W / 2;
+        target.y = H / 2;
+      });
+      window.addEventListener('resize', resize);
+      _listenersAttached = true;
+    }
+
+    draw();
+    // Warm default: start both at center so there's no sweep-in from corner
+    mouse.x = target.x = W / 2;
+    mouse.y = target.y = H / 2;
+  }
+
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+  }
+
+  return { init, stop };
+})();
+
 function toggleTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = isDark ? 'light' : 'dark';
@@ -1669,6 +1871,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.contains("ready")
     ) {
       document.body.removeEventListener("transitionend", onReady);
+      AuthBg.init();
       if (window.anime) {
         anime({
           targets: "#authBox",

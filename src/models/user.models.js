@@ -68,7 +68,7 @@ const userSchema = new Schema(
     },
   },
   {
-    // Created at, Updated at
+    // Created at & updated at fields are added automatically -->
     timestamps: true,
   },
 );

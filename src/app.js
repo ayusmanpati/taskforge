@@ -40,21 +40,29 @@ app.use(
   }),
 );
 
-// Import the routes
+// This creates a route in the Express Server.
+// Means 'When someone sends a GET request to the root URL /, the server responds with "Hello World! By Ayusman Pati :0"'.
+app.get("/", (req, res) => {
+  res.send("Hello World! By Ayusman Pati :0");
+});
+
+// IMPORT THE ROUTES -->
+
+// HealthCheck Route
 import healthCheckRouter from "./routes/healthcheck.routes.js";
 // Import the default exported router from that file and name it healthCheckRouter.
-
 app.use("/api/v1/healthcheck", healthCheckRouter);
 // As soon as someone hits 'api/v1/healthcheck', healthCheckRouter will be used.
 // Can be  tested in Postman.
 
+// Auth Route
 import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
 app.use("/api/v1/auth", authRouter);
 // Calls authRouter whenever someone hits this url. Goes to auth.routes.js and then to auth.controller.js.
 
-app.get("/", (req, res) => {
-  res.send("Hello World! By Ayusman Pati :0");
-});
+// Project Route
+import projectRouter from "./routes/project.routes.js";
+app.use("/api/v1/projects", projectRouter);
 
 export default app;

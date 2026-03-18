@@ -52,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // Custom ApiError, 409 = resource conflict (duplicate user)
   }
 
-  // Creates new user and inserts into MongoDB using Mongoose.
+  // Creates new user and inserts into MongoDB using Mongoose. (A document of DB)
   const user = await User.create({
     email,
     password,
@@ -116,7 +116,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  // Extracts data from request -- t his line extracts details from frontend.
+  // Extracts data from request -- this line extracts details from frontend.
 
   if (!email) {
     throw new ApiError(400, "Email is required.");

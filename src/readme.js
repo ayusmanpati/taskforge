@@ -1,6 +1,6 @@
 // README FILE WHICH WAS index.js EARLIER. SO IT HAS SAME STUFFS AS index.js.
 // CHANGED TO readme.js due to large number of theoretical parts here important to understand backend.
-// The real index.js is clean without so many comments
+// The real index.js is cleaner without so many comments
 
 /*
 import dotenv from "dotenv";
@@ -496,6 +496,37 @@ Routes & validators of each are handled inside "auth.routes.js" (inside routes) 
 /*
 The schema design (db design) can be referred from database-design.png (inside src).
 Made accordingly with the PRD.md document.
+The designs are implemented in models folder.
+
+NOTE --> To read about DB aggregation pipelining, refer to /Notes/mongodb-aggregation-pipelining.
+*/
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/*
+All project related controllers (as specified in PRD.md) are being dealt with in "project.controllers.js" (inside controllers).
+Users are already logged in so no authentication and verification to be done.
+Also we will have verified JWT so can access 'req.user'.
+
+Role based access perms -->
+It will be written in middleware. This middleware will act as a checker.
+--> Implemented in validateProjectPermission() (inside middlewares/auth.middleware.js)
+Validator for this is implemented in index.js (inside validators). Only required for creating project and adding member to project.
+
+Routes for projects is implemented in "project.routes.js".
+Any operation to be done on the project needs to be done by a verified user. So 'verifyJWT' should be implemented.
+'app.js' is also used to add prefix for the routes.
+*/
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/*
+All project related controllers (as specified in PRD.md) are being dealt with in "task.controllers.js".
+
+Attachments are allowed in tasks. Attachments can be images, pdfs, csv, etc.
+Attachments can be handled by using a package "multer" --> npm install multer.
+Multer is the middleware that gives the ability to upload the file or files (array of attachments) and sends to Express as "req.files".
+The middleware is implemented in "multer.middleware.js" (inside middlewares)
 */
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
