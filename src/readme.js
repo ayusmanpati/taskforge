@@ -521,12 +521,14 @@ Any operation to be done on the project needs to be done by a verified user. So 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /*
-All project related controllers (as specified in PRD.md) are being dealt with in "task.controllers.js".
+All task related controllers (as specified in PRD.md) are being dealt with in "task.controllers.js".
 
 Attachments are allowed in tasks. Attachments can be images, pdfs, csv, etc.
 Attachments can be handled by using a package "multer" --> npm install multer.
 Multer is the middleware that gives the ability to upload the file or files (array of attachments) and sends to Express as "req.files".
 The middleware is implemented in "multer.middleware.js" (inside middlewares)
+
+Routing for tasks controller done in "task.routes.js".
 */
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import {
   verifyJWT,
   validateProjectPermission,
 } from "../middlewares/auth.middleware.js";
+
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 
 const router = Router();
@@ -32,11 +33,6 @@ router
   .route("/")
   .get(getProjects)
   .post(createProjectValidator(), validate, createProject);
-/*
-router.route("/") means define multiple HTTP methods for the base route of this router.
-It becomes /projects because the router is mounted on /projects. Prefix and all will be added in app.js.
-Auth uses /login because login is a specific action endpoint, not the base resource.
-*/
 
 router
   .route("/:projectId")
@@ -54,7 +50,7 @@ router
 
 router
   .route("/:projectId/members")
-  .get(getProjectMembers)
+  .get(validateProjectPermission(AvailableUserRole), getProjectMembers)
   .post(
     validateProjectPermission([UserRolesEnum.ADMIN]),
     addMemberToProjectValidator(),

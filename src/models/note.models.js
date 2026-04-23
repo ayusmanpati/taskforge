@@ -20,7 +20,7 @@ const projectNoteSchema = new Schema(
       required: true,
     },
   },
-  { timestamp: true },
+  { timestamps: true },
 );
 
 export const ProjectNote = mongoose.model("ProjectNote", projectNoteSchema);

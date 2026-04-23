@@ -1,4 +1,3 @@
-import { User } from "../models/user.models.js";
 import { Project } from "../models/project.models.js";
 import { Task } from "../models/task.models.js";
 import { Subtask } from "../models/subtask.models.js";
@@ -6,7 +5,6 @@ import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
-import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 
 const getTasks = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
@@ -36,15 +34,20 @@ const getTasks = asyncHandler(async (req, res) => {
   */
 
   return res
-    .status(201)
-    .json(new ApiResponse(201, tasks, "Task fetched successfully!"));
+    .status(200)
+    .json(new ApiResponse(200, tasks, "Task fetched successfully!"));
 });
 
 const getTaskById = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, mate!");
+  }
+
   // Each task has some subtasks and each subtask is assigned to a particular user.
   // For this aggregation pipeline is implemented.
-
-  const { taskId } = req.params;
   const task = await Task.aggregate([
     {
       $match: {
@@ -63,7 +66,7 @@ const getTaskById = asyncHandler(async (req, res) => {
             $project: {
               _id: 1,
               username: 1,
-              fullName: 1,
+              fullname: 1,
               avatar: 1,
             },
           },
@@ -90,8 +93,8 @@ const getTaskById = asyncHandler(async (req, res) => {
                   $project: {
                     _id: 1,
                     username: 1,
-                    fullName: 1,
-                    avatar,
+                    fullname: 1,
+                    avatar: 1,
                   },
                 },
               ],
@@ -144,7 +147,7 @@ const createTask = asyncHandler(async (req, res) => {
   const attachments = files.map((file) => {
     // .map() is used to transform each file into a new object.
     return {
-      url: `${process.env.SERVER_URL}/images/${file.originalname}`,
+      url: `${process.env.SERVER_URL}/images/${file.filename}`,
       mimetype: file.mimetype,
       size: file.size,
       // These are the data to be stored in the database.
@@ -176,15 +179,129 @@ const createTask = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, task, "Task created successfully :)"));
 });
 
-const updateTask = asyncHandler(async (req, res) => {});
+const updateTask = asyncHandler(async (req, res) => {
+  const { title, description, status, attachments } = req.body;
+  const { projectId, taskId } = req.params;
 
-const deleteTask = asyncHandler(async (req, res) => {});
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, Mate!");
+  }
 
-const createSubTask = asyncHandler(async (req, res) => {});
+  const updatedTask = await Task.findByIdAndUpdate(
+    taskId,
+    {
+      title,
+      description,
+      status,
+      attachments,
+    },
+    { new: true },
+  );
 
-const updateSubTask = asyncHandler(async (req, res) => {});
+  if (!updatedTask) {
+    throw new ApiError(404, "Task not found, Mate!");
+  }
 
-const deleteSubTask = asyncHandler(async (req, res) => {});
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedTask, "Task updated successfully !"));
+});
+
+const deleteTask = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, Mate!");
+  }
+
+  const deletedTask = await Task.findByIdAndDelete(taskId);
+
+  if (!deletedTask) {
+    throw new ApiError(404, "Task not found, Mate!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedTask, "Task deleted successfully !"));
+});
+
+const createSubTask = asyncHandler(async (req, res) => {
+  const { title, isCompleted } = req.body;
+  const { projectId, taskId } = req.params;
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, mate!");
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new ApiError(404, "Task not found, mate!");
+  }
+
+  const subtask = await Subtask.create({
+    title,
+    task: new mongoose.Types.ObjectId(taskId),
+    isCompleted,
+    createdBy: new mongoose.Types.ObjectId(req.user._id),
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, subtask, "Subtask created successfully :)"));
+});
+
+const updateSubTask = asyncHandler(async (req, res) => {
+  const { title, isCompleted } = req.body;
+  const { projectId, subtaskId } = req.params;
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, Mate!");
+  }
+
+  const updatedSubtask = await Subtask.findByIdAndUpdate(
+    subtaskId,
+    {
+      title,
+      isCompleted,
+    },
+    { new: true },
+  );
+
+  if (!updatedSubtask) {
+    throw new ApiError(404, "Subtask not found, Mate!");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedSubtask, "Subtask updated successfully !"),
+    );
+});
+
+const deleteSubTask = asyncHandler(async (req, res) => {
+  const { projectId, subtaskId } = req.params;
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(404, "Project not found, Mate!");
+  }
+
+  const deletedSubtask = await Subtask.findByIdAndDelete(subtaskId);
+
+  if (!deletedSubtask) {
+    throw new ApiError(404, "Subtask not found, Mate!");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, deletedSubtask, "Subtask deleted successfully !"),
+    );
+});
 
 export {
   createSubTask,

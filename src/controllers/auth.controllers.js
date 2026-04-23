@@ -37,7 +37,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   // Wrapped in asyncHandler so doesnt have to handle errors and try-catch etc.
-  const { email, username, password, role } = req.body;
+  const { email, username, password, fullname } = req.body;
   // This uses destructuring.
   // Getting data from frontend.
 
@@ -57,6 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     username,
+    fullname,
     isEmailVerified: false,
   });
   // user is a Mongoose model.
@@ -80,11 +81,11 @@ const registerUser = asyncHandler(async (req, res) => {
     subject: "Please verify your email, mate!",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unhashedToken}`,
+      `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unhashedToken}`,
       // Dynamically generated link for verificationUrl.
       // req.protocol is http or https.
       // req.get("host") gives the host -- localhost:8000 or yourdomain.com, etc.
-      // This is then combined with the route /api/v1/users/verify-email
+      // This is then combined with the route /api/v1/auth/verify-email
       // Then the unique unhashed token is used. User clicks link → sends token → server hashes it → compares with DB.
     ),
   });
@@ -290,7 +291,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     subject: "Please verify your email, mate!",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unhashedToken}`,
+      `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${unhashedToken}`,
     ),
   });
 

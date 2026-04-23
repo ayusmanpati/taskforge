@@ -1,14 +1,12 @@
 import { User } from "../models/user.models.js";
 import { Project } from "../models/project.models.js";
 import { ProjectMember } from "../models/projectmember.models.js";
+import { Task } from "../models/task.models.js";
+import { Subtask } from "../models/subtask.models.js";
+import { ProjectNote } from "../models/note.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
-import {
-  emailVerificationMailgenContent,
-  forgotPasswordMailgenContent,
-  sendEmail,
-} from "../utils/mail.js";
 import mongoose from "mongoose";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 
@@ -22,7 +20,7 @@ const getProjects = asyncHandler(async (req, res) => {
   3/ number of members in the project
   */
 
-  const projects = await ProjectMember.aggregate(
+  const projects = await ProjectMember.aggregate([
     {
       // 1st pipeline --> filters the ProjectMember collection to only include documents where: user = current logged in user.
       $match: {
@@ -33,7 +31,7 @@ const getProjects = asyncHandler(async (req, res) => {
       // 2nd pipeline --> $lookup joins data from another collection. Here it joins, ProjectMember → Projects
       $lookup: {
         from: "projects",
-        localField: "projects",
+        localField: "project",
         foreignField: "_id",
         as: "projects",
         pipeline: [
@@ -42,7 +40,7 @@ const getProjects = asyncHandler(async (req, res) => {
             $lookup: {
               from: "projectmembers",
               localField: "_id",
-              foreignField: "projects",
+              foreignField: "project",
               as: "projectmembers",
             },
           },
@@ -62,12 +60,12 @@ const getProjects = asyncHandler(async (req, res) => {
     {
       // 3rd pipeline --> $unwind is used to deconstruct an array field from the input documents to output a document for each element of the array.
       // This is done so that each project becomes its own document.
-      $unwind: "$project",
+      $unwind: "$projects",
     },
     {
       // 4th pipeline --> $project only collects the mentioned data in the format. Used as final pipeline preparing to export the data.
       $project: {
-        project: {
+        projects: {
           _id: 1,
           name: 1,
           description: 1,
@@ -79,11 +77,11 @@ const getProjects = asyncHandler(async (req, res) => {
         _id: 0, // Don't include the _id.
       },
     },
-  );
+  ]);
 
   return res
-    .status(201)
-    .json(new ApiResponse(201, projects, "Project fetched successfully !"));
+    .status(200)
+    .json(new ApiResponse(200, projects, "Project fetched successfully !"));
 });
 
 const getProjectById = asyncHandler(async (req, res) => {
@@ -153,17 +151,33 @@ const updateProject = asyncHandler(async (req, res) => {
 const deleteProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
-  const deletedProject = await Project.findByIdAndDelete(projectId);
-
-  if (!deletedProject) {
+  const project = await Project.findById(projectId);
+  if (!project) {
     throw new ApiError(404, "Project not found, Mate!");
   }
 
+  // Delete all subtasks related to tasks of this project
+  const tasks = await Task.find({ project: projectId }).select("_id");
+  const taskIds = tasks.map((task) => task._id);
+  await Subtask.deleteMany({
+    task: { $in: taskIds },
+  });
+
+  // Delete all tasks of this project
+  await Task.deleteMany({ project: projectId });
+
+  // Delete all tasks of this project
+  await ProjectNote.deleteMany({ project: projectId });
+
+  // Delete all project members
+  await ProjectMember.deleteMany({ project: projectId });
+
+  // Delete the project
+  await Project.findByIdAndDelete(projectId);
+
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, deletedProject, "Project deleted successfully !"),
-    );
+    .json(new ApiResponse(200, {}, "Project deleted successfully !"));
 });
 
 const addMembersToProject = asyncHandler(async (req, res) => {
@@ -176,7 +190,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
   }
 
   // Syntax - Model.findByIdAndUpdate(find(id), update, options, callback)
-  await ProjectMember.findByIdAndUpdate(
+  await ProjectMember.findOneAndUpdate(
     {
       // Finds the project and the user to be added in that project.
       // Also check "Is this user already a member of this project?"
@@ -203,7 +217,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
 
 const getProjectMembers = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const project = await Project.findById(req.params);
+  const project = await Project.findById(projectId);
 
   if (!project) {
     throw new ApiError(404, "Project not found!");
@@ -231,7 +245,7 @@ const getProjectMembers = asyncHandler(async (req, res) => {
             $project: {
               _id: 1,
               username: 1,
-              fullName: 1,
+              fullname: 1,
               avatar: 1,
             },
           },
@@ -346,7 +360,9 @@ const deleteMember = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Project member not found!");
   }
 
-  const deletedMember = await Project.findByIdAndDelete(projectMember._id);
+  const deletedMember = await ProjectMember.findByIdAndDelete(
+    projectMember._id,
+  );
 
   if (!deletedMember) {
     throw new ApiError(404, "Project member not found, Mate!");

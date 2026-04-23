@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import { ApiError } from "./utils/api-error.js";
+// ApiError helps us identify custom operational errors and return clean client responses.
 
 const app = express();
 // express() creates a web server application.
@@ -24,7 +26,9 @@ app.use(express.static("public"));
 // Example: public/logo.png → http://localhost:8000/logo.png
 
 // Cookie Access -->
+import cookieParser from "cookie-parser";
 app.use(cookieParser());
+// Parses Cookie header and exposes cookies as req.cookies.
 
 // Cors Config -->
 app.use(
@@ -57,12 +61,57 @@ app.use("/api/v1/healthcheck", healthCheckRouter);
 
 // Auth Route
 import authRouter from "./routes/auth.routes.js";
-import cookieParser from "cookie-parser";
+
+// cookie-parser middleware package.
 app.use("/api/v1/auth", authRouter);
 // Calls authRouter whenever someone hits this url. Goes to auth.routes.js and then to auth.controller.js.
 
 // Project Route
 import projectRouter from "./routes/project.routes.js";
 app.use("/api/v1/projects", projectRouter);
+
+// Task Route
+import taskRouter from "./routes/task.routes.js";
+app.use("/api/v1/tasks", taskRouter);
+
+// Note Route
+import noteRouter from "./routes/note.routes.js";
+app.use("/api/v1/notes", noteRouter);
+
+/* 
+Global error handler --> ensures API errors are returned in JSON format.
+This middleware catches all errors in the app and converts them into a clean, consistent JSON response.
+Client → Routes → Controllers → Error → Global Error Handler → JSON Response
+*/
+app.use((err, req, res, next) => {
+  /*
+  Any middleware/controller throws an error →
+  Express forwards it here →
+  Build proper status code →
+  Send standardized JSON response.
+  */
+
+  if (res.headersSent) {
+    // If response is already started by some previous handler, don't interfere & delegate to Express default handler.
+    return next(err);
+  }
+
+  const statusCode =
+    err?.statusCode || (err?.name === "MulterError" ? 400 : 500);
+  // Priority:
+  // 1) Custom statusCode from ApiError
+  // 2) Multer upload errors become 400
+  // 3) Fallback to 500 for unknown errors
+
+  // Returns consisite t
+  return res.status(statusCode).json({
+    statusCode,
+    data: null, // Error responses do not carry success payload data.
+    message: err?.message || "Internal Server Error", // Safe fallback message.
+    success: false, // Keeps API response shape consistent.
+    error: err instanceof ApiError ? err.error : [],
+    // Extra validation/details for known operational errors. This line ensures only the custom errors send detailed info, while all other errors return a safe empty array.
+  });
+});
 
 export default app;

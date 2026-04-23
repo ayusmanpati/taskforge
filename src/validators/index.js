@@ -1,5 +1,5 @@
-import { body } from "express-validator";
-import { AvailableUserRole } from "../utils/constants.js";
+import { body, param } from "express-validator";
+import { AvailableTaskStatus, AvailableUserRole } from "../utils/constants.js";
 
 const userRegisterValidator = () => {
   return [
@@ -23,7 +23,7 @@ const userRegisterValidator = () => {
 
     body("password").trim().notEmpty().withMessage("Password is required."),
 
-    body("fullName").optional().trim(),
+    body("fullname").optional().trim(),
     // optional() --> might be there, might not be there.
   ];
 };
@@ -81,6 +81,38 @@ const addMemberToProjectValidator = () => {
   ];
 };
 
+const createTaskValidator = () => {
+  return [
+    body("title").trim().notEmpty().withMessage("Title is required."),
+    body("description").optional(),
+    body("status")
+      .notEmpty()
+      .withMessage("Status is required.")
+      .isIn(AvailableTaskStatus)
+      .withMessage("Status is invalid."),
+  ];
+};
+
+const createSubtaskValidator = () => {
+  return [
+    body("title").trim().notEmpty().withMessage("Title is required."),
+    body("isCompleted")
+      .isBoolean()
+      .withMessage("isCompleted must be true or false.")
+      .toBoolean(),
+    // toBoolean() converts the incoming value into a real JS boolean.
+  ];
+};
+
+const createNoteValidator = () => {
+  return [
+    body("content")
+      .trim()
+      .notEmpty()
+      .withMessage("Content of the note is required."),
+  ];
+};
+
 export {
   userRegisterValidator,
   userLoginValidator,
@@ -89,4 +121,7 @@ export {
   userResetForgotPasswordValidator,
   createProjectValidator,
   addMemberToProjectValidator,
+  createTaskValidator,
+  createSubtaskValidator,
+  createNoteValidator,
 };
