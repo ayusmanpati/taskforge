@@ -188,7 +188,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     req.user._id,
     // This req.user was set as user by "verifyJWT".
     { $set: { refreshToken: "" } },
-    { new: true },
+    { returnDocument: "after" },
   );
   // Refresh token is used to generate new access tokens --> clearing it ensures the user cannot generate new access tokens after logging out.
 

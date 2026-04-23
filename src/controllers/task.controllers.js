@@ -196,7 +196,7 @@ const updateTask = asyncHandler(async (req, res) => {
       status,
       attachments,
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!updatedTask) {
@@ -268,7 +268,7 @@ const updateSubTask = asyncHandler(async (req, res) => {
       title,
       isCompleted,
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!updatedSubtask) {

@@ -133,9 +133,9 @@ const updateProject = asyncHandler(async (req, res) => {
       name,
       description,
     },
-    { new: true },
+    { returnDocument: "after" },
     // DB returns the updated document instead of the old document.
-    // Default behavior of MongoDB is to send the original old dcoument --> "new: true" overrides that.
+    // Default behavior of MongoDB is to send the original old document --> returnDocument: "after" overrides that.
   );
   if (!updatedProject) {
     throw new ApiError(404, "Project not found, Mate!");
@@ -204,7 +204,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
       role: role,
     },
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
       // IMPO NOTE => "upsert" (update + insert) creates a new document if none of them exists.
     },
@@ -336,7 +336,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
     {
       role: newRole,
     },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   if (!projectMember) {

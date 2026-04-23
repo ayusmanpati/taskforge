@@ -109,7 +109,7 @@ const updateNote = asyncHandler(async (req, res) => {
       content,
     },
     { returnDocument: "after" },
-    // Same as new: "true"
+    // Returns the updated document.
   );
 
   if (!updatedNote) {
