@@ -19,6 +19,7 @@ import {
 
 import {
   verifyJWT,
+  requireVerifiedEmail,
   validateProjectPermission,
 } from "../middlewares/auth.middleware.js";
 
@@ -37,6 +38,7 @@ router
   .route("/:projectId")
   .get(validateProjectPermission(AvailableUserRole), getTasks)
   .post(
+    requireVerifiedEmail,
     validateProjectPermission([
       UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,
@@ -52,6 +54,7 @@ router
   .route("/:projectId/t/:taskId")
   .get(validateProjectPermission(AvailableUserRole), getTaskById)
   .put(
+    requireVerifiedEmail,
     validateProjectPermission([
       UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,
@@ -61,6 +64,7 @@ router
     updateTask,
   )
   .delete(
+    requireVerifiedEmail,
     validateProjectPermission([
       UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,
@@ -71,6 +75,7 @@ router
 router
   .route("/:projectId/t/:taskId/subtasks")
   .post(
+    requireVerifiedEmail,
     validateProjectPermission([
       UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,
@@ -83,12 +88,14 @@ router
 router
   .route("/:projectId/st/:subtaskId")
   .put(
+    requireVerifiedEmail,
     validateProjectPermission(AvailableUserRole),
     createSubtaskValidator(),
     validate,
     updateSubTask,
   )
   .delete(
+    requireVerifiedEmail,
     validateProjectPermission([
       UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,

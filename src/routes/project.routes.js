@@ -19,6 +19,7 @@ import {
 
 import {
   verifyJWT,
+  requireVerifiedEmail,
   validateProjectPermission,
 } from "../middlewares/auth.middleware.js";
 
@@ -32,18 +33,28 @@ router.use(verifyJWT);
 router
   .route("/")
   .get(getProjects)
-  .post(createProjectValidator(), validate, createProject);
+  .post(
+    requireVerifiedEmail,
+    createProjectValidator(),
+    validate,
+    createProject,
+  );
 
 router
   .route("/:projectId")
   .get(validateProjectPermission(AvailableUserRole), getProjectById)
   .put(
+    requireVerifiedEmail,
     validateProjectPermission([UserRolesEnum.ADMIN]),
     createProjectValidator(),
     validate,
     updateProject,
   )
-  .delete(validateProjectPermission([UserRolesEnum.ADMIN]), deleteProject);
+  .delete(
+    requireVerifiedEmail,
+    validateProjectPermission([UserRolesEnum.ADMIN]),
+    deleteProject,
+  );
 // "validateProjectPermission(AvailableUserRole)" means eveybody can use this and have the access.
 // :projectId means it goes via req.params.
 // No colon => No params. The one with ':' is the params.
@@ -52,6 +63,7 @@ router
   .route("/:projectId/members")
   .get(validateProjectPermission(AvailableUserRole), getProjectMembers)
   .post(
+    requireVerifiedEmail,
     validateProjectPermission([UserRolesEnum.ADMIN]),
     addMemberToProjectValidator(),
     validate,
@@ -60,8 +72,16 @@ router
 
 router
   .route("/:projectId/members/:userId")
-  .put(validateProjectPermission([UserRolesEnum.ADMIN]), updateMemberRole)
-  .delete(validateProjectPermission([UserRolesEnum.ADMIN]), deleteMember);
+  .put(
+    requireVerifiedEmail,
+    validateProjectPermission([UserRolesEnum.ADMIN]),
+    updateMemberRole,
+  )
+  .delete(
+    requireVerifiedEmail,
+    validateProjectPermission([UserRolesEnum.ADMIN]),
+    deleteMember,
+  );
 // Here, two params are taken in consideration -> projectId & userId
 
 export default router;

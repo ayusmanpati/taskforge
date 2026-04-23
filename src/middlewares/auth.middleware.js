@@ -58,6 +58,15 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 });
 
+export const requireVerifiedEmail = asyncHandler(async (req, res, next) => {
+  // Used on sensitive write routes so unverified users can still log in but cannot modify core data.
+  if (!req.user?.isEmailVerified) {
+    throw new ApiError(403, "Please verify your email to perform this action.");
+  }
+
+  next();
+});
+
 export const validateProjectPermission = (roles = []) => {
   /*
   validateProjectPermission middleware runs →

@@ -12,6 +12,7 @@ import { createNoteValidator } from "../validators/index.js";
 
 import {
   verifyJWT,
+  requireVerifiedEmail,
   validateProjectPermission,
 } from "../middlewares/auth.middleware.js";
 
@@ -24,6 +25,7 @@ router
   .route("/:projectId")
   .get(validateProjectPermission(AvailableUserRole), getNotes)
   .post(
+    requireVerifiedEmail,
     validateProjectPermission([UserRolesEnum.ADMIN]),
     createNoteValidator(),
     validate,
@@ -34,11 +36,16 @@ router
   .route("/:projectId/n/:noteId")
   .get(validateProjectPermission(AvailableUserRole), getNoteById)
   .put(
+    requireVerifiedEmail,
     validateProjectPermission([UserRolesEnum.ADMIN]),
     createNoteValidator(),
     validate,
     updateNote,
   )
-  .delete(validateProjectPermission([UserRolesEnum.ADMIN]), deleteNote);
+  .delete(
+    requireVerifiedEmail,
+    validateProjectPermission([UserRolesEnum.ADMIN]),
+    deleteNote,
+  );
 
 export default router;
