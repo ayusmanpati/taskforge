@@ -4,9 +4,9 @@ import multer from "multer";
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // This is where to store the uploaded files.
-    cb(null, "./public/images");
+    cb(null, "./frontend/images");
     // The callback format is :- cb(error, destinationPath).
-    // cb(null, "./public/images") = No error, Save file inside ./public/images.
+    // cb(null, "./frontend/images") = No error, Save file inside ./frontend/images.
   },
   filename: function (req, file, cb) {
     // This is how file is named.
@@ -35,7 +35,7 @@ Client uploads file
 ↓
 Multer middleware runs
 ↓
-File stored in /public/images
+File stored in /frontend/images
 ↓
 File info added to req.file
 ↓

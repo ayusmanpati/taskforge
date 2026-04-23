@@ -21,9 +21,9 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 // Parses URL-encoded data (form submissions, spaces turns to %20, etc.)
 // extended: true allows nested objects in form data
-app.use(express.static("public"));
-// Serves static files (images, CSS, JS, HTML) from the "public" folder
-// Example: public/logo.png → http://localhost:8000/logo.png
+app.use(express.static("frontend"));
+// Serves static files (images, CSS, JS, HTML) from the "frontend" folder
+// Example: frontend/logo.png → http://localhost:8000/logo.png
 
 // Cookie Access -->
 import cookieParser from "cookie-parser";
