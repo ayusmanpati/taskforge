@@ -160,10 +160,10 @@ body.ready {
   justify-content: center;
   flex-shrink: 0;
   transition:
-    background 0.15s,
-    border-color 0.15s,
-    color 0.15s,
-    transform 0.15s;
+    background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .theme-toggle:hover {
   background: var(--surface2);
@@ -253,8 +253,12 @@ body.ready {
   position: relative;
   transform: translateZ(0);
   transition:
-    background 0.15s,
-    color 0.15s;
+    background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s ease-out;
+}
+.ni:active {
+  transform: scale(0.98) translateZ(0);
 }
 .ni:hover {
   background: var(--surface2);
@@ -312,8 +316,12 @@ body.ready {
   font-weight: 400;
   transform: translateZ(0);
   transition:
-    background 0.12s,
-    color 0.12s;
+    background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s ease-out;
+}
+.pni:active {
+  transform: scale(0.98) translateZ(0);
 }
 .pni:hover {
   background: var(--surface2);
@@ -434,9 +442,11 @@ body.ready {
   transform: translateZ(0);
   backface-visibility: hidden;
   transition:
-    background 0.15s,
-    box-shadow 0.15s,
-    transform 0.12s;
+    background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.1s ease-out;
 }
 .btn-p {
   background: var(--btn-p-bg);
@@ -447,8 +457,9 @@ body.ready {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .btn-p:active,
-.btn-g:active {
-  transform: translate3d(0, 1px, 0) scale(0.98);
+.btn-g:active,
+.btn-b:active {
+  transform: scale(0.96) translateZ(0);
 }
 .btn-g {
   background: var(--surface);
@@ -617,14 +628,14 @@ body.ready {
   backface-visibility: hidden;
   will-change: auto;
   transition:
-    border-color 0.18s ease,
-    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    border-color 0.2s ease,
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .pc:hover {
   transform: translate3d(0, -3px, 0);
   border-color: var(--border2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 .pc-top {
   display: flex;
@@ -819,14 +830,14 @@ tbody tr:hover td {
   backface-visibility: hidden;
   will-change: auto;
   transition:
-    border-color 0.18s ease,
-    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    border-color 0.2s ease,
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .tc:hover {
   transform: translate3d(0, -2px, 0);
   border-color: var(--border2);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 .tc-t {
   font-size: 13px;
@@ -1101,6 +1112,7 @@ tbody tr:hover td {
 }
 .mo.open {
   display: flex;
+  animation: modalOverlayIn 0.3s ease-out forwards;
 }
 .md {
   background: var(--surface);
@@ -1108,8 +1120,10 @@ tbody tr:hover td {
   border-radius: var(--r);
   width: 90%;
   max-width: 450px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  opacity: 0;
+  animation: modalBoxIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.05s;
 }
 .md.lg {
   max-width: 560px;
@@ -1178,13 +1192,18 @@ input:-webkit-autofill:active {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r2);
+  background-clip: padding-box;
   color: var(--ink);
   font-family: var(--body);
   font-size: 13px;
   padding: 8px 11px;
   outline: none;
   appearance: none;
+  -webkit-appearance: none;
+  transform: translateZ(0);
   transition:
+    background-color 0.22s ease,
+    color 0.22s ease,
     border-color 0.15s,
     box-shadow 0.15s;
 }
@@ -1561,9 +1580,12 @@ hr.div {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--accent) 30%,
-    #6e8ef7 50%,
-    var(--accent) 70%,
+    var(--accent) calc(50% - 240px),
+    #6e8ef7 calc(50% - 130px),
+    transparent calc(50% - 125px),
+    transparent calc(50% + 125px),
+    #6e8ef7 calc(50% + 130px),
+    var(--accent) calc(50% + 240px),
     transparent 100%
   );
   transform: translateY(-50%) scaleX(0);
@@ -1575,7 +1597,7 @@ hr.div {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.82);
+  transform: translate(-50%, -50%) scale(0.95);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -1601,57 +1623,51 @@ hr.div {
   pointer-events: all;
 }
 
-#loginOverlay.react-active #loginOverlayTop,
-#loginOverlay.react-active #loginOverlayBot {
-  transition: transform 540ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-#loginOverlay.react-active #loginOverlaySeam {
-  transition:
-    transform 360ms ease-out,
-    opacity 360ms ease-out;
-}
-
-#loginOverlay.react-active #loginOverlayLogo {
-  transition:
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 320ms ease;
-}
-
-#loginOverlay.phase-closing #loginOverlayTop {
-  transform: translateY(0%);
-}
-
+#loginOverlay.phase-closing #loginOverlayTop,
 #loginOverlay.phase-closing #loginOverlayBot {
   transform: translateY(0%);
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #loginOverlay.phase-closing #loginOverlaySeam {
   opacity: 1;
   transform: translateY(-50%) scaleX(1);
+  transition: 
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1) 150ms,
+    opacity 400ms ease 150ms;
 }
 
 #loginOverlay.phase-closing #loginOverlayLogo {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+  transition:
+    transform 600ms cubic-bezier(0.22, 1, 0.36, 1) 250ms,
+    opacity 450ms ease 250ms;
 }
 
-#loginOverlay.phase-opening #loginOverlayTop {
-  transform: translateY(-100%);
-}
-
-#loginOverlay.phase-opening #loginOverlayBot {
-  transform: translateY(100%);
+#loginOverlay.phase-opening #loginOverlayLogo {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.97);
+  transition:
+    transform 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 250ms ease;
 }
 
 #loginOverlay.phase-opening #loginOverlaySeam {
   opacity: 0;
   transform: translateY(-50%) scaleX(0);
+  transition: 
+    transform 350ms ease-out 100ms,
+    opacity 250ms ease-out 100ms;
 }
 
-#loginOverlay.phase-opening #loginOverlayLogo {
-  opacity: 0;
-  transform: translate(-50%, -46%) scale(1.05);
+#loginOverlay.phase-opening #loginOverlayTop,
+#loginOverlay.phase-opening #loginOverlayBot {
+  transform: translateY(-100%);
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1) 150ms;
+}
+#loginOverlay.phase-opening #loginOverlayBot {
+  transform: translateY(100%);
 }
 
 .sb.entering {
@@ -1671,16 +1687,24 @@ hr.div {
 }
 
 @keyframes sbIn {
-  from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 @keyframes tbIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 @keyframes viewInEntering {
-  0% { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: scale(0.98) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes modalOverlayIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes modalBoxIn {
+  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ── RESPONSIVE ── */
