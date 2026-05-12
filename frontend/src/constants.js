@@ -109,6 +109,26 @@ export const EP_DATA = [
   { m: "GET", p: "/api/v1/healthcheck/", d: "Health status", a: false },
 ];
 
+export const STATUS_LABEL = {
+  todo: "Todo",
+  in_progress: "In progress",
+  done: "Done",
+};
+
+export const STATUS_BADGE = {
+  todo: "b-gray",
+  in_progress: "b-amber",
+  done: "b-green",
+};
+
+export const METHOD_BADGE = {
+  GET: "b-green",
+  POST: "b-amber",
+  PUT: "b-acc",
+  PATCH: "b-acc",
+  DELETE: "b-red",
+};
+
 export const INITIAL_DATA = {
   projects: [
     {

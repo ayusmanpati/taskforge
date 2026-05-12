@@ -1,6 +1,14 @@
-import React, { createContext, useContext, useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { INITIAL_DATA } from '../constants.js';
-import { cloneInitialData, buildId } from '../utils/helpers.js';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
+import { INITIAL_DATA } from "../constants.js";
+import { cloneInitialData, buildId } from "../utils/helpers.js";
 
 const AppContext = createContext(null);
 
@@ -867,18 +875,12 @@ export function AppProvider({ children }) {
   );
 
   const isProjectAdmin = useMemo(() => {
-    if (!currentUser || !activeProjectId) {
+    if (!currentUser) {
       return false;
     }
 
-    if (currentUser.role === "admin") {
-      return true;
-    }
-
-    return (data.pm[activeProjectId] || []).some(
-      (member) => member.u === currentUser._id && member.r === "admin",
-    );
-  }, [activeProjectId, currentUser, data.pm]);
+    return currentUser.role === "admin";
+  }, [currentUser]);
 
   const sidebarTaskCount = useMemo(
     () => data.tasks.filter((task) => task.assignedTo === currentUserId).length,
@@ -1026,20 +1028,16 @@ export function AppProvider({ children }) {
     detailTaskProject,
     detailTaskAssignee,
     memberOptions,
-    overlayClassName
+    overlayClassName,
   };
 
-  return (
-    <AppContext.Provider value={appState}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={appState}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
+    throw new Error("useApp must be used within an AppProvider");
   }
   return context;
 }
